@@ -1,28 +1,12 @@
-#!/usr/bin/env python
-# coding: utf-8
 
-# In[ ]:
-
-
-get_ipython().system('pip install --upgrade langchain openai -q')
-get_ipython().system('pip install unstructured -q')
-get_ipython().system('pip install unstructured[local-inference] -q')
-get_ipython().system('pip install detectron2@git+https://github.com/facebookresearch/detectron2.git@v0.6#egg=detectron2 -q')
-get_ipython().system('apt-get install poppler-utils')
-get_ipython().system('pip install tiktoken -q')
-get_ipython().system('pip install chromadb -q')
-get_ipython().system('pip install pinecone-client -q')
-
-
-# In[ ]:
-
-
-import os
-os.environ["OPENAI_API_KEY"] = " API KEY HERE "
-
-
-# In[ ]:
-
+pip install --upgrade langchain openai -q
+pip install unstructured -q
+pip install unstructured[local-inference] -q
+pip install detectron2@git+https://github.com/facebookresearch/detectron2.git@v0.6#egg=detectron2 -q
+apt-get install poppler-utils
+pip install tiktoken -q
+pip install chromadb -q
+pip install pinecone-client -q
 
 import os
 import openai
@@ -39,20 +23,16 @@ from langchain.vectorstores import Pinecone
 from langchain.chains.summarize import  load_summarize_chain
 from IPython.display import Markdown, display
 
+os.environ["OPENAI_API_KEY"] = " API KEY HERE "
 
-# In[ ]:
 
-
-# Loading multiple documents here with different subjects, to measure the acuuracy of the final output
+# Loading multiple (text) documents here with different subjects, to measure the acuuracy of the final output
 
 files = '/PATH TO THE FILES'
 fs = os.path.join(files)
 loader = DirectoryLoader(fs)
 documents = loader.load()
 print(len(documents))
-
-
-# In[ ]:
 
 
 def split_docs(documents, chunk_size=1000, chunk_overlap=150, separators=["\n\n", "\n", "(?<=\. )", " ", ""]):
@@ -64,18 +44,13 @@ docs = split_docs(documents)
 print(len(docs))
 
 
-# In[ ]:
-
 
 embeddings = OpenAIEmbeddings()
 
 query_result = embeddings.embed_query("Hello world")
 len(query_result)
 
-
-# In[ ]:
-
-
+#pinecone vectore databases
 pinecone.init(
     api_key=" pinecone api key here",
     environment=" different from case to case "
@@ -89,9 +64,6 @@ index = Pinecone.from_documents(docs,
                                 )
 
 
-# In[ ]:
-
-
 def get_similiar_docs(query, k=2, score=False):
   if score:
     similar_docs = index.similarity_search_with_score(query, k=k)
@@ -100,14 +72,12 @@ def get_similiar_docs(query, k=2, score=False):
   return similar_docs
 
 
-# In[ ]:
-
+# using gpt-4 for the question answering session
 
 #model_name = "text-davinci-003"
 # model_name = "gpt-3.5-turbo"
 model_name = "gpt-4"
 llm = OpenAI(model_name=model_name,temperature = 0.3)
-
 
 
 #memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
@@ -121,30 +91,19 @@ def get_answer(query):
   return answer
 
 
-# In[ ]:
-
-
 query = " WRITE DOWN YOUR QUESTION HERE"
 answer = get_answer(query)
 
 
 # Summarizing the documents with LangChain :
 
-# In[ ]:
-
 
 # for summarizing each part
 chain.llm_chain.prompt.template
 
 
-# In[ ]:
-
-
 # for combining the parts
 chain.combine_document_chain.llm_chain.prompt.template
-
-
-# In[ ]:
 
 
 chain = load_summarize_chain(llm, chain_type="map_reduce", verbose=True)
@@ -152,10 +111,4 @@ chain = load_summarize_chain(llm, chain_type="map_reduce", verbose=True)
 
 output_summary = chain.run(docs)
 wrapped_text = textwrap.fill(output_summary, width=100, break_long_words=False, replace_whitespace=False)
-
-
-# In[ ]:
-
-
-
 
